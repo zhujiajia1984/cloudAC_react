@@ -4,6 +4,7 @@ import {
     Route,
     Switch
 } from 'react-router-dom';
+import './App.less';
 import Login from './Pages/Login/Login';
 
 //
@@ -16,9 +17,11 @@ export default class App extends React.Component {
     render() {
         return (
             <Router>
-            	<Switch>
-            		<Route exact path="/" component={Login} />
-            	</Switch>
+                <div className="AppFontFamily">
+                    <Switch>
+                        <Route exact path="/" component={Login} />
+                    </Switch>
+                </div>
            </Router>
         );
     }

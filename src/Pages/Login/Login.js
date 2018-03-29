@@ -1,5 +1,6 @@
 import React from 'react';
 import './Login.less';
+import LoginMain from '../../Components/LoginMain/LoginMain'
 
 //
 export default class Login extends React.Component {
@@ -8,8 +9,10 @@ export default class Login extends React.Component {
     }
     render() {
         return (
-            <div className="title">
-				Login
+            <div>
+				<LoginMain>
+                    <span>abc</span>            
+                </LoginMain>
             </div>
         );
     }

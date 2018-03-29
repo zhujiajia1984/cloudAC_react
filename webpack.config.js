@@ -42,7 +42,15 @@ module.exports = {
                     }
                 ]
             })
-        }]
+        }, {
+            test: /\.(png|jpg|gif)$/,
+            use: [{
+                loader: 'file-loader',
+                options: {
+                    outputPath: 'assets/images/'
+                }
+            }]
+        }, ]
     },
     plugins: [
         new ExtractTextPlugin('style.css'),
