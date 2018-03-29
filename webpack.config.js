@@ -1,13 +1,15 @@
 const path = require('path');
-
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const webpack = require('webpack');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = {
     entry: {
-        main: ['./src/index.js']
+        main: ['./src/index.js'],
+        vendor: ['react', 'react-dom']
     },
     output: {
-        filename: 'bundle.js',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
     },
     devServer: {
@@ -31,11 +33,11 @@ module.exports = {
                     { loader: "css-loader" },
                     {
                         loader: "less-loader",
-                        // options: {
-                        //     modifyVars: {
-                        //         '@primary-color': '#1DA57A',
-                        //     }
-                        // }
+                        options: {
+                            modifyVars: {
+                                '@primary-color': '#1DA57A',
+                            }
+                        }
                     }
                 ]
             })
@@ -43,5 +45,10 @@ module.exports = {
     },
     plugins: [
         new ExtractTextPlugin('style.css'),
+        new webpack.optimize.CommonsChunkPlugin({
+            name: "vendor",
+            minChunks: Infinity,
+        }),
+        new CleanWebpackPlugin(['dist']),
     ]
 }
