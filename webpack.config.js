@@ -19,6 +19,9 @@ module.exports = {
         historyApiFallback: true,
     },
     devtool: 'source-map', // source-map
+    externals: {
+        'qq': 'qq',
+    },
     module: {
         rules: [{
             test: /\.(js|jsx)$/,

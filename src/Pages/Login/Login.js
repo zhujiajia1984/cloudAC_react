@@ -15,7 +15,7 @@ export default class Login extends React.Component {
     render() {
         return (
             <div>
-				<LoginMain>
+                <LoginMain>
                     <Tabs defaultActiveKey="account" className="loginTabStyle">
                         <TabPane tab="账号登录" key="account">
                             <LoginForm></LoginForm>

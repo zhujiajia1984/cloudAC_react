@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import './App.less';
 import Login from './Pages/Login/Login';
+import HiYouWxAppMap from './Pages/HiYouWxAppMap/HiYouWxAppMap';
 
 //
 export default class App extends React.Component {
@@ -19,7 +20,8 @@ export default class App extends React.Component {
             <Router>
                 <div className="AppFontFamily">
                     <Switch>
-                        <Route exact path="/" component={Login} />
+                        <Route exact path="/" component={HiYouWxAppMap} />
+                        <Route path="/login" component={Login} />
                     </Switch>
                 </div>
            </Router>
