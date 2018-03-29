@@ -2,6 +2,7 @@ const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const webpack = require('webpack');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: {
@@ -50,5 +51,9 @@ module.exports = {
             minChunks: Infinity,
         }),
         new CleanWebpackPlugin(['dist']),
+        new HtmlWebpackPlugin({
+            title: 'cloudAC',
+            template: './src/TemplateHtml/index.html',
+        })
     ]
 }

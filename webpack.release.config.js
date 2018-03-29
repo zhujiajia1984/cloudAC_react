@@ -1,13 +1,17 @@
 const path = require('path');
 
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const webpack = require('webpack');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: {
-        main: ['./src/index.js']
+        main: ['./src/index.js'],
+        vendor: ['react', 'react-dom']
     },
     output: {
-        filename: 'bundle.js',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
     },
     module: {
@@ -37,5 +41,14 @@ module.exports = {
     },
     plugins: [
         new ExtractTextPlugin('style.css'),
+        new webpack.optimize.CommonsChunkPlugin({
+            name: "vendor",
+            minChunks: Infinity,
+        }),
+        new CleanWebpackPlugin(['dist']),
+        new HtmlWebpackPlugin({
+            title: 'cloudAC',
+            template: './src/TemplateHtml/index.html',
+        })
     ]
 }
