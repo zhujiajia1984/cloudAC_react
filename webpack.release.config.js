@@ -1,5 +1,4 @@
 const path = require('path');
-
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const webpack = require('webpack');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
@@ -8,7 +7,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
     entry: {
         main: ['./src/index.js'],
-        vendor: ['react', 'react-dom']
+        vendor: ['react', 'react-dom', 'react-router-dom']
     },
     output: {
         filename: '[name].bundle.js',

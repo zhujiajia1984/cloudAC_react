@@ -7,14 +7,14 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
     entry: {
         main: ['./src/index.js'],
-        vendor: ['react', 'react-dom']
+        vendor: ['react', 'react-dom', 'react-router-dom']
     },
     output: {
         filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
     },
     devServer: {
-        contentBase: path.join(__dirname, "dist"),
+        contentBase: [path.join(__dirname, "dist"), path.join(__dirname, "assets/images"), ],
         port: 18202,
         historyApiFallback: true,
     },

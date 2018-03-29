@@ -1,6 +1,5 @@
 import React from 'react';
 import './Login.less';
-import { Button } from 'antd';
 
 //
 export default class Login extends React.Component {
@@ -11,7 +10,6 @@ export default class Login extends React.Component {
         return (
             <div className="title">
 				Login
-				<Button type="primary">primary</Button>
             </div>
         );
     }
