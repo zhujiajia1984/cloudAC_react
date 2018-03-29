@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import Login from './Components/Login/Login';
 
 ReactDOM.render(
-    <h1>Hello, world!222</h1>,
+    <Login></Login>,
     document.getElementById('root')
 );
