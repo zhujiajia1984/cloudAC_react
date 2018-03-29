@@ -28,15 +28,23 @@ module.exports = {
                     { loader: "css-loader" },
                     {
                         loader: "less-loader",
-                        // options: {
-                        //     modifyVars: {
-                        //         '@primary-color': '#1DA57A',
-                        //     }
-                        // }
+                        options: {
+                            modifyVars: {
+                                '@primary-color': '#1DA57A',
+                            }
+                        }
                     }
                 ]
             })
-        }]
+        }, {
+            test: /\.(png|jpg|gif)$/,
+            use: [{
+                loader: 'file-loader',
+                options: {
+                    outputPath: 'cloudac/assets/images/'
+                }
+            }]
+        }, ]
     },
     plugins: [
         new ExtractTextPlugin('style.css'),
