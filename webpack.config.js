@@ -34,11 +34,11 @@ module.exports = {
                     { loader: "css-loader" },
                     {
                         loader: "less-loader",
-                        options: {
-                            modifyVars: {
-                                '@primary-color': '#1DA57A',
-                            }
-                        }
+                        // options: {
+                        //     modifyVars: {
+                        //         '@primary-color': '#1DA57A',
+                        //     }
+                        // }
                     }
                 ]
             })
