@@ -6,7 +6,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: {
-        main: ['./src/index.js'],
+        main: ['whatwg-fetch', './src/index.js'],
         vendor: ['react', 'react-dom', 'react-router-dom']
     },
     output: {
