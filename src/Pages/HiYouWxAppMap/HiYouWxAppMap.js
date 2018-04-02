@@ -1,20 +1,48 @@
 import React from 'react';
 import './HiYouWxAppMap.less';
 import qq from 'qq';
-import { Card, message } from 'antd';
+import {
+	Card,
+	message,
+	Form,
+	Input,
+	Select,
+	Button,
+	Popconfirm,
+	Upload,
+	Icon
+} from 'antd';
 
 //
 let polygonPoints = [];
 const domain = "https://test.weiquaninfo.cn";
+const FormItem = Form.Item;
+const Option = Select.Option;
 
 //
 export default class HiYouWxAppMap extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			curLng: '',
-			curLat: '',
+			curLng: null,
+			curLat: null,
 			curPolgon: null,
+			curMarker: null,
+			curMarkerInfo: {
+				_id: '',
+				createTime: '',
+				lng: null,
+				lat: null,
+				name: '',
+				desp: '',
+				type: 'science',
+				thumb: '',
+			},
+			isSaveMarkerLoading: false,
+			markers: [],
+			markersInfo: [],
+			markersListener: [],
+			imageUrl: '',
 		}
 	}
 
@@ -33,20 +61,39 @@ export default class HiYouWxAppMap extends React.Component {
 			drawingControlOptions: {
 				position: qq.maps.ControlPosition.TOP_CENTER,
 				drawingModes: [
+					qq.maps.drawing.OverlayType.MARKER,
 					qq.maps.drawing.OverlayType.POLYGON,
 				]
 			},
 			map: this.map,
 		});
 
-		// 显示多边形
+		// 显示多边形和所有markers
 		this.getArea();
+		this.getMarkers();
 
 		// 事件
-		this.clickListener = qq.maps.event.addListener(this.map, 'click',
-			this.onClickMap.bind(this));
 		this.drawPolygonListener = qq.maps.event.addListener(this.drawingManager,
 			'polygoncomplete', this.onDrawPolygon.bind(this));
+		this.drawMarkerListener = qq.maps.event.addListener(this.drawingManager,
+			'markercomplete', this.onDrawMarker.bind(this));
+	}
+
+	// 新绘制点
+	onDrawMarker(marker) {
+		// 删除原有点
+		if (this.state.curMarker != null) {
+			let curMarker = this.state.curMarker;
+			curMarker.setMap(null);
+		}
+		let lng = parseFloat(marker.getPosition().getLng().toFixed(6));
+		let lat = parseFloat(marker.getPosition().getLat().toFixed(6));
+		// let curMarkerInfo = this.state.curMarkerInfo;
+		let curMarkerInfo = {};
+		curMarkerInfo.lng = lng;
+		curMarkerInfo.lat = lat;
+		curMarkerInfo.type = 'science';
+		this.setState({ curMarker: marker, curMarkerInfo: curMarkerInfo, imageUrl: '' });
 	}
 
 	// 绘制结束（只画一个多边形）
@@ -145,41 +192,210 @@ export default class HiYouWxAppMap extends React.Component {
 
 	// unload
 	componentWillUnmount() {
-		qq.maps.event.removeListener(this.clickListener);
 		qq.maps.event.removeListener(this.dragEndListener);
 		qq.maps.event.removeListener(this.drawPolygonListener);
+		qq.maps.event.removeListener(this.drawMarkerListener);
 	}
 
-	// 新增标记点
-	onAddPoint(e) {
-		e.preventDefault();
-		if (typeof(this.marker) != "undefined") {
-			this.marker.setMap(null);
+	// marker name
+	onChangeMarkerName(e) {
+		let curMarkerInfo = this.state.curMarkerInfo;
+		curMarkerInfo.name = e.target.value;
+		this.setState(curMarkerInfo: curMarkerInfo);
+	}
+	onChangeMarkeDesp(e) {
+		let curMarkerInfo = this.state.curMarkerInfo;
+		curMarkerInfo.desp = e.target.value;
+		this.setState(curMarkerInfo: curMarkerInfo);
+	}
+
+	// get all markers
+	getMarkers() {
+		// 清空当前marker
+		this.state.markers.map((item) => {
+			item.setMap(null);
+		})
+
+		// get
+		let url = `${domain}/mongo/markers`;
+		fetch(url, { method: "GET" })
+			.then(res => {
+				let contentType = res.headers.get("Content-Type");
+				if (res.status == 200 && contentType && contentType.includes("application/json")) {
+					return res.json();
+				} else {
+					throw new Error(`status:${res.status} contentType:${contentType}`);
+				}
+			})
+			.then(resJson => {
+				// 显示所有markers
+				let markers = [];
+				let markersListener = [];
+				resJson.map((item, index) => {
+					let marker = new qq.maps.Marker({
+						position: new qq.maps.LatLng(item.lat, item.lng),
+						map: this.map
+					})
+					markers.push(marker);
+					markersListener[index] = qq.maps.event.addListener(marker,
+						'click', this.onMarkerClick.bind(this));
+				});
+				let markersInfo = resJson;
+				this.setState({ markers: markers, markersInfo: markersInfo });
+			})
+			.catch(error => {
+				alert(`查询多边形信息失败：${error.message}`);
+			})
+	}
+
+	// click marker
+	onMarkerClick(marker) {
+		let lng = marker.latLng.getLng();
+		let lat = marker.latLng.getLat();
+		let markersInfo = this.state.markersInfo;
+		let curMarkerInfo = {};
+		for (let i = 0; i < markersInfo.length; i++) {
+			if (markersInfo[i].lat == lat && markersInfo[i].lng == lng) {
+				curMarkerInfo = markersInfo[i];
+				break;
+			}
 		}
-		this.marker = new qq.maps.Marker({
-			position: new qq.maps.LatLng(this.state.curLat, this.state.curLng),
-			map: this.map,
-			draggable: true,
-			title: '鼠标拖动可移动位置',
-		});
-		this.dragEndListener = qq.maps.event.addListener(this.marker, 'dragend',
-			this.onDragEndMarker.bind(this));
+		this.setState({ curMarkerInfo: curMarkerInfo, imageUrl: curMarkerInfo.thumb });
 	}
 
-	// 鼠标在地图上移动时，显示经纬度
-	onClickMap(event) {
-		this.setState({
-			curLng: event.latLng.getLng(),
-			curLat: event.latLng.getLat(),
+	// save  new marker / update marker
+	onSaveMarker() {
+		let { name, lng, lat, desp, type } = this.state.curMarkerInfo;
+		if (typeof(name) == 'undefined' || name.length == 0 || lng == null || lat == null) {
+			message.error("marker信息不全");
+			return;
+		}
+		// 判断是否是新增还是更新
+		let isNew = true;
+		this.state.markersInfo.map((item) => {
+			if (item.lat == lat && item.lng == lng) {
+				isNew = false;
+			}
 		})
+
+		// save
+		if (isNew) {
+			let url = `${domain}/mongo/markers`;
+			fetch(url, {
+					method: "POST",
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						name: name,
+						type: type,
+						desp: desp,
+						lng: lng,
+						lat: lat,
+						thumb: this.state.imageUrl,
+					}),
+				})
+				.then(res => {
+					let contentType = res.headers.get("Content-Type");
+					if (res.status == 201 && contentType && contentType.includes("application/json")) {
+						return res.json();
+					} else {
+						throw new Error(`status:${res.status} contentType:${contentType}`);
+					}
+				})
+				.then(resJson => {
+					this.getMarkers();
+					message.success("已成功新增marker");
+				})
+				.catch(error => {
+					alert(`新增marker失败：${error.message}`);
+				})
+		} else {
+			let { _id } = this.state.curMarkerInfo;
+			let url = `${domain}/mongo/markers?id=${_id}`;
+			fetch(url, {
+					method: "PUT",
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						name: name,
+						type: type,
+						desp: desp,
+						lng: lng,
+						lat: lat,
+						thumb: this.state.imageUrl,
+					}),
+				})
+				.then(res => {
+					let contentType = res.headers.get("Content-Type");
+					if (res.status == 201 && contentType && contentType.includes("application/json")) {
+						return res.json();
+					} else {
+						throw new Error(`status:${res.status} contentType:${contentType}`);
+					}
+				})
+				.then(resJson => {
+					this.getMarkers();
+					message.success("已成功更新marker");
+				})
+				.catch(error => {
+					alert(`更新marker失败：${error.message}`);
+				})
+		}
 	}
 
-	// 拖动结束
-	onDragEndMarker(event) {
-		this.setState({
-			curLng: event.latLng.getLng(),
-			curLat: event.latLng.getLat(),
-		})
+	// 删除marker
+	onDelMarker() {
+		let { _id } = this.state.curMarkerInfo;
+		let url = `${domain}/mongo/markers?id=${_id}`;
+		fetch(url, { method: "DELETE" })
+			.then(res => {
+				let contentType = res.headers.get("Content-Type");
+				if (res.status == 204) {
+					this.getMarkers();
+					message.success("已成功删除marker");
+				} else {
+					throw new Error(`status:${res.status} contentType:${contentType}`);
+				}
+			})
+			.catch(error => {
+				alert(`更新marker失败：${error.message}`);
+			})
+	}
+
+	// 文件上传过滤
+	onBeforeUpload(file) {
+		let isExtSupport = false;
+		switch (file.type) {
+			case 'image/jpg':
+				isExtSupport = true;
+				break;
+			case 'image/jpeg':
+				isExtSupport = true;
+				break;
+			case 'image/png':
+				isExtSupport = true;
+				break;
+		}
+		if (!isExtSupport) {
+			message.error('You can only upload JPG/PNG file!');
+		}
+		const isLt2M = file.size / 1024 / 1024 < 2;
+		if (!isLt2M) {
+			message.error('Image must smaller than 2MB!');
+		}
+
+		return isExtSupport && isLt2M;
+	}
+
+	// 文件上传状态变更
+	onUploadChange(info) {
+		let { file, fileList, event } = info;
+		if (file.status === 'done') {
+			let imageUrl = `${domain}/${file.response}`;
+			this.setState({ imageUrl: imageUrl })
+		}
 	}
 
 	//
@@ -193,12 +409,77 @@ export default class HiYouWxAppMap extends React.Component {
 						<a href="javascript:;" onClick={this.onRefreshArea.bind(this)}>刷新区域</a>
 						<a href="javascript:;" onClick={this.onDeleteArea.bind(this)}>删除区域</a>
 					</div>
-					<Card title="当前点击经纬度"
+					<Card title="当前Marker信息"
 						bordered={false}
-						extra={<a href="javascript:;" onClick={this.onAddPoint.bind(this)}>标记此点</a>}
+						className="markerCard"
+						extra={<Popconfirm title="确认删除marker吗？" onConfirm={this.onDelMarker.bind(this)}
+                                    okText="确认" cancelText="取消">
+                                    <a href="javascript:;">删除</a>
+                                </Popconfirm>}
 					>
-				      <p>{`经度：${this.state.curLng}`}</p>
-				      <p>{`纬度：${this.state.curLat}`}</p>
+				    	<Form className="markerForm">
+				    		<FormItem
+				    			label="Marker名称"
+				    		>
+				    			<Input value={this.state.curMarkerInfo.name}
+				    				onChange={this.onChangeMarkerName.bind(this)}
+				    			/>
+				    		</FormItem>
+				    		<FormItem
+				    			label="Marker简述"
+				    		>
+				    			<Input value={this.state.curMarkerInfo.desp}
+				    				onChange={this.onChangeMarkeDesp.bind(this)}/>
+				    		</FormItem>
+				    		<FormItem
+				    			label="Marker类型"
+				    		>
+				    			<Select defaultValue="science" style={{ width: 120 }}>
+							      <Option value="science">景点</Option>
+							    </Select>
+				    		</FormItem>
+				    		<FormItem
+				    			label="Marker经度："
+				    		>
+				    			<span>{this.state.curMarkerInfo.lng}</span>
+				    		</FormItem>
+				    		<FormItem
+				    			label="Marker纬度："
+				    		>
+				    			<span>{this.state.curMarkerInfo.lat}</span>
+				    		</FormItem>
+				    		<FormItem
+				    			label="Marker缩略图："
+				    		>
+				    			<Upload className="markerThumbUploader"
+				    				name="avatar"
+				    				listType="picture-card"
+				    				showUploadList={false}
+				    				action='https://test.weiquaninfo.cn/mongo/markers/upload'
+				    				beforeUpload={this.onBeforeUpload.bind(this)}
+				    				onChange={this.onUploadChange.bind(this)}
+				    			>
+				    				{this.state.imageUrl
+				    					?(<img src={this.state.imageUrl}
+				    						style={{height: 128, width: 200}}
+				    						/>)
+				    					:(<div>
+				    						<Icon type="plus"></Icon>
+				    						<p>上传</p>
+				    					</div>)
+				    				}
+				    			</Upload>
+				    		</FormItem>
+				    		<FormItem>
+		                        <Button 
+		                            type="primary"
+		                            style={{width: '100%'}}
+		                            size="large"
+		                            onClick={this.onSaveMarker.bind(this)}
+		                            loading={this.state.isSaveMarkerLoading}
+		                        >保存</Button>
+                    		</FormItem>
+				    	</Form>
 				    </Card>
 				</div>
 			</div>
