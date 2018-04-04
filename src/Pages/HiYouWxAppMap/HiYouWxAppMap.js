@@ -37,12 +37,17 @@ export default class HiYouWxAppMap extends React.Component {
 				desp: '',
 				type: 'science',
 				thumb: '',
+				audio: {
+					name: '',
+					url: '',
+				}
 			},
 			isSaveMarkerLoading: false,
 			markers: [],
 			markersInfo: [],
 			markersListener: [],
 			imageUrl: '',
+			fileList: [],
 		}
 	}
 
@@ -93,6 +98,7 @@ export default class HiYouWxAppMap extends React.Component {
 		curMarkerInfo.lng = lng;
 		curMarkerInfo.lat = lat;
 		curMarkerInfo.type = 'science';
+		curMarkerInfo.audio = { name: '', url: '' };
 		this.setState({ curMarker: marker, curMarkerInfo: curMarkerInfo, imageUrl: '' });
 	}
 
@@ -260,7 +266,12 @@ export default class HiYouWxAppMap extends React.Component {
 				break;
 			}
 		}
-		this.setState({ curMarkerInfo: curMarkerInfo, imageUrl: curMarkerInfo.thumb });
+		let audio = typeof(curMarkerInfo.audio) == "undefined" ? [] : curMarkerInfo.audio;
+		this.setState({
+			curMarkerInfo: curMarkerInfo,
+			imageUrl: curMarkerInfo.thumb,
+			fileList: audio,
+		});
 	}
 
 	// save  new marker / update marker
@@ -293,6 +304,7 @@ export default class HiYouWxAppMap extends React.Component {
 						lng: lng,
 						lat: lat,
 						thumb: this.state.imageUrl,
+						audio: this.state.fileList,
 					}),
 				})
 				.then(res => {
@@ -325,6 +337,7 @@ export default class HiYouWxAppMap extends React.Component {
 						lng: lng,
 						lat: lat,
 						thumb: this.state.imageUrl,
+						audio: this.state.fileList,
 					}),
 				})
 				.then(res => {
@@ -389,13 +402,32 @@ export default class HiYouWxAppMap extends React.Component {
 		return isExtSupport && isLt2M;
 	}
 
-	// 文件上传状态变更
+	// 图片上传、音频上传
 	onUploadChange(info) {
-		let { file, fileList, event } = info;
+		let { file } = info;
 		if (file.status === 'done') {
 			let imageUrl = `${domain}/${file.response}`;
 			this.setState({ imageUrl: imageUrl })
 		}
+	}
+	onUploadAudioChange(info) {
+		let { file, fileList } = info;
+		if (file.status === 'done') {
+			let audioUrl = `${domain}/${file.response}`;
+			fileList = [{
+				uid: this.state.curMarkerInfo._id,
+				name: file.name,
+				status: 'done',
+				reponse: '',
+				url: audioUrl,
+			}]
+		}
+
+		// 更新上传进度
+		this.setState({ fileList: fileList.slice() });
+	}
+	onRemoveAudio(file) {
+		this.setState({ fileList: [] });
 	}
 
 	//
@@ -453,6 +485,7 @@ export default class HiYouWxAppMap extends React.Component {
 				    		>
 				    			<Upload className="markerThumbUploader"
 				    				name="avatar"
+				    				accept="image/jpg,image/jpeg,image/png"
 				    				listType="picture-card"
 				    				showUploadList={false}
 				    				action='https://test.weiquaninfo.cn/mongo/markers/upload'
@@ -468,6 +501,23 @@ export default class HiYouWxAppMap extends React.Component {
 				    						<p>上传</p>
 				    					</div>)
 				    				}
+				    			</Upload>
+				    		</FormItem>
+				    		<FormItem
+				    			label="Marker音频："
+				    			style={{"marginBottom": 15}}
+				    		>
+				    			<Upload 
+				    				name="audio"
+				    				accept="audio/mp3"
+				    				fileList={this.state.fileList}
+				    				action='https://test.weiquaninfo.cn/mongo/markers/uploadAudio'
+				    				onChange={this.onUploadAudioChange.bind(this)}
+				    				onRemove={this.onRemoveAudio.bind(this)}
+				    			>
+				    				<Button>
+										<Icon type="upload" /> 上传mp3音频
+									</Button>
 				    			</Upload>
 				    		</FormItem>
 				    		<FormItem>
