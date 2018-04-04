@@ -18,6 +18,7 @@ let polygonPoints = [];
 const domain = "https://test.weiquaninfo.cn";
 const FormItem = Form.Item;
 const Option = Select.Option;
+const { TextArea } = Input;
 
 //
 export default class HiYouWxAppMap extends React.Component {
@@ -48,6 +49,7 @@ export default class HiYouWxAppMap extends React.Component {
 			markersListener: [],
 			imageUrl: '',
 			fileList: [],
+			richText: '',
 		}
 	}
 
@@ -99,7 +101,12 @@ export default class HiYouWxAppMap extends React.Component {
 		curMarkerInfo.lat = lat;
 		curMarkerInfo.type = 'science';
 		curMarkerInfo.audio = { name: '', url: '' };
-		this.setState({ curMarker: marker, curMarkerInfo: curMarkerInfo, imageUrl: '' });
+		this.setState({
+			curMarker: marker,
+			curMarkerInfo: curMarkerInfo,
+			imageUrl: '',
+			fileList: [],
+		});
 	}
 
 	// 绘制结束（只画一个多边形）
@@ -271,6 +278,7 @@ export default class HiYouWxAppMap extends React.Component {
 			curMarkerInfo: curMarkerInfo,
 			imageUrl: curMarkerInfo.thumb,
 			fileList: audio,
+			richText: curMarkerInfo.richText,
 		});
 	}
 
@@ -305,6 +313,7 @@ export default class HiYouWxAppMap extends React.Component {
 						lat: lat,
 						thumb: this.state.imageUrl,
 						audio: this.state.fileList,
+						richText: this.state.richText,
 					}),
 				})
 				.then(res => {
@@ -338,6 +347,7 @@ export default class HiYouWxAppMap extends React.Component {
 						lat: lat,
 						thumb: this.state.imageUrl,
 						audio: this.state.fileList,
+						richText: this.state.richText,
 					}),
 				})
 				.then(res => {
@@ -415,7 +425,7 @@ export default class HiYouWxAppMap extends React.Component {
 		if (file.status === 'done') {
 			let audioUrl = `${domain}/${file.response}`;
 			fileList = [{
-				uid: this.state.curMarkerInfo._id,
+				uid: Date.now(),
 				name: file.name,
 				status: 'done',
 				reponse: '',
@@ -428,6 +438,11 @@ export default class HiYouWxAppMap extends React.Component {
 	}
 	onRemoveAudio(file) {
 		this.setState({ fileList: [] });
+	}
+
+	// 多行文本输入
+	onTextAreaChange(e) {
+		this.setState({ richText: e.target.value });
 	}
 
 	//
@@ -505,7 +520,6 @@ export default class HiYouWxAppMap extends React.Component {
 				    		</FormItem>
 				    		<FormItem
 				    			label="Marker音频："
-				    			style={{"marginBottom": 15}}
 				    		>
 				    			<Upload 
 				    				name="audio"
@@ -519,6 +533,15 @@ export default class HiYouWxAppMap extends React.Component {
 										<Icon type="upload" /> 上传mp3音频
 									</Button>
 				    			</Upload>
+				    		</FormItem>
+				    		<FormItem
+				    			label="Marker文字介绍："
+				    			style={{"marginBottom": 15}}
+				    		>
+				    			<TextArea autosize={true}
+				    				value={this.state.richText}
+				    				onChange={this.onTextAreaChange.bind(this)}
+				    			/>
 				    		</FormItem>
 				    		<FormItem>
 		                        <Button 
