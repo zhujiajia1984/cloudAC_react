@@ -17,7 +17,7 @@ export default class App extends React.Component {
     //
     render() {
         return (
-            <Router>
+            <Router basename="/radar">
                 <div className="AppFontFamily">
                     <Switch>
                         <Route exact path="/" component={HiYouWxAppMap} />
